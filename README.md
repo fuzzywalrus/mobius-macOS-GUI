@@ -1,3 +1,9 @@
+# What is this nonsense?
+
+Mobius is a great Hotline server but what Mac users crave is point and click UIs. This is meant to be a GUI wrapper around the Golang binary for macOS and only macOS as I'm not about to suffer making this for other OSes.
+
+
+
 <!--<picture>
   <source media="(prefers-color-scheme: dark)" srcset="dark_logo.png">
   <source media="(prefers-color-scheme: light)" srcset="light_logo.png">
