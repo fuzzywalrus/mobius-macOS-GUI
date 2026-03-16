@@ -28,5 +28,10 @@ dist/*
 # Ignore the bind mounted config directory
 config/*
 
+# Xcode
+MobiusAdmin/MobiusAdmin.xcodeproj/
+MobiusAdmin/build/
+xcuserdata/
+
 # Claude Code IDE files
 .claude
