@@ -6,7 +6,9 @@ Hotline was always designed to help the technically curious jump into the world 
 
 There will not be a Windows or Linux version of this as it is Swift UI build, aka Mac Native. 
 
-The app embeds the Mobius Hotline server binary (written in Go) and wraps it in a SwiftUI interface. Being a mix of Go and Swift UI, this app should use minimal amounts of RAM to operate. It's 55~ MB size is largely due to needing dual UB binaries for the Mobius Go CLI and the Swift UI. 
+The app embeds the Mobius Hotline server binary (written in Go) and wraps it in a SwiftUI interface. Being a mix of Go and Swift UI, this app should use minimal amounts of RAM to operate. It's 55~ MB size is largely due to needing dual UB binaries for the Mobius Go CLI and the Swift UI.
+
+[Download the latest release](https://github.com/fuzzywalrus/mobius-macOS-GUI/releases)
 
 ![MobiusAdmin screenshot](docs/screenshot.png)
 
