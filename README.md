@@ -2,7 +2,9 @@
 
 A native macOS GUI for running a [Mobius](https://github.com/jhalter/mobius) Hotline server. Instead of fiddling with the command line, you get a point-and-click app that manages the server process, configuration, and logs.
 
-Hotline was always designed to help the technically curious jump into the world of server creation with a simple point-and-click interface. The goal is to be able to provide this experience for Mobius, the most popular version of the Hotline server operating today. There will not be a Windows or Linux version of this as it is Swift. 
+Hotline was always designed to help the technically curious jump into the world of server creation with a simple point-and-click interface. The goal is to be able to provide this experience for Mobius, the most popular version of the Hotline server operating today. 
+
+There will not be a Windows or Linux version of this as it is Swift UI build, aka Mac Native. 
 
 The app embeds the Mobius Hotline server binary (written in Go) and wraps it in a SwiftUI interface. Being a mix of Go and Swift UI, this app should use minimal amounts of RAM to operate. It's 55~ MB size is largely due to needing dual UB binaries for the Mobius Go CLI and the Swift UI. 
 
