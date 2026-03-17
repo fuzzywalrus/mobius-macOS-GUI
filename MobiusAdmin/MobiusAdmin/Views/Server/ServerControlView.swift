@@ -38,7 +38,7 @@ struct ServerControlView: View {
                     Button(action: { appState.restartServer() }) {
                         Label("Restart", systemImage: "arrow.clockwise")
                     }
-                    .disabled(appState.serverStatus == .stopped || !appState.hasBinary)
+                    .disabled(!appState.hasBinary)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)

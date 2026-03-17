@@ -13,7 +13,7 @@ struct MobiusAdminApp: App {
                     appDelegate.appState = appState
                 }
         }
-        .defaultSize(width: 900, height: 600)
+        .defaultSize(width: 1050, height: 650)
     }
 }
 
