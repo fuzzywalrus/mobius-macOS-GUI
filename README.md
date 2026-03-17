@@ -1,4 +1,4 @@
-# MobiusAdmin
+# MobiusAdmin - A Hotline Server with a GUI
 
 A native macOS GUI for running a [Mobius](https://github.com/jhalter/mobius) Hotline server. Instead of fiddling with the command line, you get a point-and-click app that manages the server process, configuration, and logs.
 
