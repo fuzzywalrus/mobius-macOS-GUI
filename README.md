@@ -16,11 +16,12 @@ The app embeds the Mobius Hotline server binary (written in Go) and wraps it in 
 
 ## Features
 
-- Start, stop, and restart the server with one click
+- **Setup wizard** — guided first-launch experience walks you through server name, description, file root, banner, network, trackers, and more
+- Start, stop, and restart the server with one click or keyboard shortcuts (Server menu)
 - Edit server name, description, port, and tracker registration from the GUI
 - Browse and set your file root directory
 - Edit the login agreement and message board
-- Set a server banner image
+- Set a server banner image (includes a bundled default banner)
 - **Account management** — create, edit, and delete user accounts with a visual permissions editor covering all 35 Hotline access flags
 - **Ban management** — ban and unban by IP, username, or nickname via the server's REST API
 - **Online users monitor** — see who's connected in real time with auto-refreshing stats (connected users, peak, downloads, uploads)
@@ -28,20 +29,21 @@ The app embeds the Mobius Hotline server binary (written in Go) and wraps it in 
 - **News editor** — manage the message board and threaded news categories
 - **Live log viewer** — combined command center view with online users and server logs in a split pane
 - **Config reload** — push config changes to the running server without restarting
+- **Update checker** — checks GitHub for new releases from the About window
 - Server process is automatically stopped when the app quits
 - Universal binary (Apple Silicon and Intel)
 - Fully signed and notarized for macOS Gatekeeper
 
 ## Future Plans
 
-- First time setup with guided setup
-- Chasing down whatever features Mobius has that haven't been implemented yet
+- Display the embedded Mobius server version
+- Implement any remaining Mobius features not yet exposed in the GUI
 
 ## Installation
 
 ### Download
 
-Grab the latest `.dmg` from the [Releases](https://github.com/jhalter/mobius/releases) page, open it, and drag MobiusAdmin to your Applications folder.
+Grab the latest `.dmg` from the [Releases](https://github.com/fuzzywalrus/mobius-macOS-GUI/releases) page, open it, and drag MobiusAdmin to your Applications folder.
 
 ### Build from source
 
@@ -74,7 +76,7 @@ APPLE_SIGNING_IDENTITY=Developer ID Application: Your Name (YOUR_TEAM_ID)
 ```
 ## Pre macOS 14 Support
 
-Currently I'm using Go 1.26 supports macOS 12 (Monterey) as the minimum, and  some newer SwiftUI APIs (like the @Observable macro which requires macOS 14). If someone is so inclined, macOS 12 wouldn't require much work. If someone is willing to try their hand at Go 1.22 with a fork, this could be ported to as early as 10.15 Catalina.
+Currently using Go 1.26 which supports macOS 12 (Monterey) as the minimum, and some newer SwiftUI APIs (like the `@Observable` macro which requires macOS 14). If someone is so inclined, macOS 12 support wouldn't require much work. If someone is willing to try their hand at Go 1.22 with a fork, this could be ported to as early as 10.15 Catalina.
 
 ## Configuration
 
