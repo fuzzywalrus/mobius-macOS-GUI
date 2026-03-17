@@ -21,14 +21,21 @@ The app embeds the Mobius Hotline server binary (written in Go) and wraps it in 
 - Browse and set your file root directory
 - Edit the login agreement and message board
 - Set a server banner image
-- Live log viewer with stdout/stderr output
+- **Account management** — create, edit, and delete user accounts with a visual permissions editor covering all 35 Hotline access flags
+- **Ban management** — ban and unban by IP, username, or nickname via the server's REST API
+- **Online users monitor** — see who's connected in real time with auto-refreshing stats (connected users, peak, downloads, uploads)
+- **File browser** — browse the server's file root directory with file sizes and dates
+- **News editor** — manage the message board and threaded news categories
+- **Live log viewer** — combined command center view with online users and server logs in a split pane
+- **Config reload** — push config changes to the running server without restarting
 - Server process is automatically stopped when the app quits
+- Universal binary (Apple Silicon and Intel)
 - Fully signed and notarized for macOS Gatekeeper
 
 ## Future Plans
 
 - First time setup with guided setup
-- Chasing down whatever features Mobius has that I haven't implimented yet
+- Chasing down whatever features Mobius has that haven't been implemented yet
 
 ## Installation
 
@@ -104,6 +111,10 @@ Change the admin password from a Hotline client after your first login.
 ## Network
 
 The server listens on port **5500** by default (file transfers on 5501). To allow connections from outside your LAN, you'll need to forward these ports on your router.
+
+## Looking for a Hotline Client?
+
+Check out [Hotline Navigator](https://github.com/fuzzywalrus/Hotline-Navigator), a modern Hotline client available for macOS, Windows, Linux, Android, iOS, and iPadOS.
 
 ## License
 
