@@ -25,9 +25,8 @@ The app embeds the Mobius Hotline server binary (written in Go) and wraps it in 
 
 ## Future Plans
 
-- Universal Binary Builds
 - First time setup with guided setup
-- Chasing down whatever features Mobius has
+- Chasing down whatever features Mobius has that I haven't implimented yet
 
 ## Installation
 
