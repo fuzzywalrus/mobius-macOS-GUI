@@ -3,6 +3,17 @@ import Foundation
 /// HTTP client for the Mobius server REST API.
 /// Communicates with the running server via the randomly assigned API port and key.
 actor APIClient {
+    enum APIError: LocalizedError {
+        case httpError(statusCode: Int, body: String)
+
+        var errorDescription: String? {
+            switch self {
+            case .httpError(let statusCode, let body):
+                return "HTTP \(statusCode): \(body)"
+            }
+        }
+    }
+
     private let baseURL: URL
     private let apiKey: String
     private let session: URLSession
@@ -85,7 +96,8 @@ actor APIClient {
         var request = URLRequest(url: baseURL.appendingPathComponent(path))
         request.httpMethod = "GET"
         request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
-        let (data, _) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request)
+        try validateResponse(response, data: data)
         return data
     }
 
@@ -97,7 +109,16 @@ actor APIClient {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONEncoder().encode(body)
         }
-        let (data, _) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request)
+        try validateResponse(response, data: data)
         return data
+    }
+
+    private func validateResponse(_ response: URLResponse, data: Data) throws {
+        guard let httpResponse = response as? HTTPURLResponse else { return }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            throw APIError.httpError(statusCode: httpResponse.statusCode, body: body)
+        }
     }
 }

@@ -51,6 +51,13 @@ struct ServerControlView: View {
                     .foregroundStyle(.red)
                     .font(.caption)
                 }
+
+                Button("Run Setup Wizard...") {
+                    appState.showSetupWizard = true
+                }
+                .buttonStyle(.link)
+                .font(.caption)
+                .padding(.top, 8)
             }
 
             Spacer()

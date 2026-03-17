@@ -70,6 +70,12 @@ final class ProcessManager {
             return
         }
 
+        // Validate port range before converting to UInt16
+        guard (1...65535).contains(serverPort) else {
+            status = .error("Port must be between 1 and 65535.")
+            return
+        }
+
         // Check if the port is already in use before attempting to start
         if Self.isPortInUse(port: UInt16(serverPort)) {
             status = .error("Port \(serverPort) is already in use. Stop any existing server first.")
@@ -137,7 +143,7 @@ final class ProcessManager {
         }
     }
 
-    /// Stop the server by sending SIGTERM.
+    /// Stop the server by sending SIGTERM and waiting for exit.
     func stop() {
         guard let process else {
             status = .stopped
@@ -149,6 +155,18 @@ final class ProcessManager {
 
         if process.isRunning {
             process.terminate()
+
+            // Wait up to 5 seconds for graceful exit
+            let deadline = Date().addingTimeInterval(5.0)
+            while process.isRunning && Date() < deadline {
+                Thread.sleep(forTimeInterval: 0.05)
+            }
+
+            // Force kill if still running
+            if process.isRunning {
+                kill(process.processIdentifier, SIGKILL)
+                process.waitUntilExit()
+            }
         }
 
         cleanupProcess()

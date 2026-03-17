@@ -36,6 +36,15 @@ final class AppState {
     var config = ServerConfig()
     var configError: String?
 
+    // MARK: - Setup Wizard
+
+    var showSetupWizard = false
+
+    var isFirstLaunch: Bool {
+        let mgr = ConfigFileManager(configDir: URL(fileURLWithPath: configDir))
+        return !mgr.configFileExists
+    }
+
     // MARK: - Log State
 
     var logLines: [LogLine] = []
@@ -142,6 +151,11 @@ final class AppState {
             return
         }
 
+        // If no banner is configured, use the generic default banner
+        if config.bannerFile.isEmpty {
+            ensureDefaultBanner()
+        }
+
         let configURL = URL(fileURLWithPath: configDir)
         do {
             try processManager.start(configDir: configURL, serverPort: serverPort)
@@ -164,6 +178,10 @@ final class AppState {
         } catch {
             configError = "Failed to create config directory: \(error.localizedDescription)"
             return
+        }
+
+        if config.bannerFile.isEmpty {
+            ensureDefaultBanner()
         }
 
         let configURL = URL(fileURLWithPath: configDir)
@@ -217,9 +235,28 @@ final class AppState {
         }
     }
 
+    /// Validates that a login name is safe for use as a filename.
+    /// Only allows lowercase alphanumeric characters, underscores, and hyphens.
+    static func isValidLogin(_ login: String) -> Bool {
+        let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789_-")
+        return !login.isEmpty && login.unicodeScalars.allSatisfy { allowed.contains($0) }
+    }
+
     func saveAccount(_ account: UserAccount) {
         accountError = nil
+
+        guard Self.isValidLogin(account.login) else {
+            accountError = "Invalid login name. Use only lowercase letters, numbers, hyphens, and underscores."
+            return
+        }
+
         let url = usersDir.appendingPathComponent("\(account.login).yaml")
+
+        // Verify the resolved path stays inside the Users directory
+        guard url.standardizedFileURL.path.hasPrefix(usersDir.standardizedFileURL.path) else {
+            accountError = "Invalid login name."
+            return
+        }
 
         do {
             let encoder = YAMLEncoder()
@@ -233,7 +270,18 @@ final class AppState {
 
     func deleteAccount(_ account: UserAccount) {
         accountError = nil
+
+        guard Self.isValidLogin(account.login) else {
+            accountError = "Invalid login name."
+            return
+        }
+
         let url = usersDir.appendingPathComponent("\(account.login).yaml")
+
+        guard url.standardizedFileURL.path.hasPrefix(usersDir.standardizedFileURL.path) else {
+            accountError = "Invalid login name."
+            return
+        }
 
         do {
             try FileManager.default.removeItem(at: url)
@@ -336,6 +384,99 @@ final class AppState {
         if root.isEmpty { return "" }
         if root.hasPrefix("/") { return root }
         return URL(fileURLWithPath: configDir).appendingPathComponent(root).path
+    }
+
+    // MARK: - Setup Wizard Commit
+
+    func commitWizardDraft(_ draft: WizardDraft, startServer: Bool) {
+        // Validate required fields
+        if draft.serverDescription.trimmingCharacters(in: .whitespaces).isEmpty {
+            configError = "A server description is required."
+            return
+        }
+
+        // Map draft values to config
+        config.name = draft.serverName
+        config.description = draft.serverDescription
+        config.fileRoot = draft.fileRoot
+        config.enableBonjour = draft.enableBonjour
+        config.enableTrackerRegistration = draft.enableTrackerRegistration
+        config.trackers = draft.enabledTrackers
+        config.newsDateFormat = draft.newsDateFormat
+        config.newsDelimiter = draft.newsDelimiter
+        config.maxDownloads = draft.maxDownloads
+        config.maxDownloadsPerClient = draft.maxDownloadsPerClient
+        config.maxConnectionsPerIP = draft.maxConnectionsPerIP
+        serverPort = draft.serverPort
+
+        // Ensure directory structure and save config
+        do {
+            try ensureConfigDir()
+        } catch {
+            configError = "Failed to create config directory: \(error.localizedDescription)"
+            return
+        }
+
+        // Write Agreement.txt
+        let agreementPath = URL(fileURLWithPath: configDir).appendingPathComponent("Agreement.txt")
+        try? draft.agreementText.write(to: agreementPath, atomically: true, encoding: .utf8)
+
+        // Copy banner
+        if draft.useDefaultBanner {
+            // Copy default banner from app bundle
+            if let bundleBanner = Bundle.main.url(forResource: "default-banner", withExtension: "jpg") {
+                let dest = URL(fileURLWithPath: configDir).appendingPathComponent("banner.jpg")
+                let fm = FileManager.default
+                do {
+                    if fm.fileExists(atPath: dest.path) {
+                        try fm.removeItem(at: dest)
+                    }
+                    try fm.copyItem(at: bundleBanner, to: dest)
+                    config.bannerFile = "banner.jpg"
+                } catch {
+                    configError = "Failed to copy default banner: \(error.localizedDescription)"
+                }
+            }
+        } else if let bannerURL = draft.bannerSourceURL {
+            let dest = URL(fileURLWithPath: configDir).appendingPathComponent(draft.bannerFilename)
+            let fm = FileManager.default
+            do {
+                if fm.fileExists(atPath: dest.path) {
+                    try fm.removeItem(at: dest)
+                }
+                try fm.copyItem(at: bannerURL, to: dest)
+                config.bannerFile = draft.bannerFilename
+            } catch {
+                configError = "Failed to copy banner: \(error.localizedDescription)"
+            }
+        }
+
+        // Save final config
+        saveConfigNow()
+
+        if startServer {
+            self.startServer()
+        }
+    }
+
+    // MARK: - Default Banner
+
+    /// Copies the bundled default-banner.jpg into the config directory as banner.jpg
+    /// and updates config.bannerFile so the Go binary has a valid file to load.
+    func ensureDefaultBanner() {
+        guard let bundleBanner = Bundle.main.url(forResource: "default-banner", withExtension: "jpg") else { return }
+        let dest = URL(fileURLWithPath: configDir).appendingPathComponent("banner.jpg")
+        let fm = FileManager.default
+        do {
+            if fm.fileExists(atPath: dest.path) {
+                try fm.removeItem(at: dest)
+            }
+            try fm.copyItem(at: bundleBanner, to: dest)
+            config.bannerFile = "banner.jpg"
+            saveConfigNow()
+        } catch {
+            configError = "Failed to copy default banner: \(error.localizedDescription)"
+        }
     }
 
     // MARK: - Private

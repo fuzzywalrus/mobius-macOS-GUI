@@ -125,7 +125,6 @@ struct AccountsView: View {
 struct AccountDetailView: View {
     @Environment(AppState.self) private var appState
     @State private var draft: UserAccount
-    @State private var newPassword = ""
     @State private var changePassword = false
 
     let account: UserAccount
@@ -159,14 +158,9 @@ struct AccountDetailView: View {
 
                         Divider()
 
-                        Toggle("Change Password", isOn: $changePassword)
+                        Toggle("Reset Password", isOn: $changePassword)
                         if changePassword {
-                            LabeledContent("New Password") {
-                                SecureField("Password", text: $newPassword)
-                                    .textFieldStyle(.roundedBorder)
-                                    .frame(maxWidth: 200)
-                            }
-                            Text("Leave empty for no password. Password will be bcrypt hashed on save.")
+                            Text("This will clear the password so the account has no password. To set a specific password, use a Hotline client — Mobius requires bcrypt hashing which is not supported in this GUI.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -211,7 +205,6 @@ struct AccountDetailView: View {
                     Button("Revert") {
                         draft = account
                         changePassword = false
-                        newPassword = ""
                     }
                     .disabled(draft == account && !changePassword)
 
@@ -226,29 +219,18 @@ struct AccountDetailView: View {
         .onChange(of: account.login) {
             draft = account
             changePassword = false
-            newPassword = ""
         }
     }
 
     private func save() {
         var toSave = draft
         if changePassword {
-            // Store plaintext — the server will need a reload to pick up changes.
-            // Note: Mobius expects bcrypt hashes in the YAML. We store the raw password
-            // and inform the user they need to use a Hotline client or the server's own
-            // hashing. For empty passwords, we use the known bcrypt hash.
-            if newPassword.isEmpty {
-                toSave.password = "$2y$10$jINeSWW2yhkwf.O6Eznq6O2yfV.SGtj3rzx1cmEqB1LIlt3OG1nOq"
-            } else {
-                // We can't easily bcrypt in Swift without a dependency.
-                // Store a marker that the admin set a password — they should use
-                // a Hotline client to set passwords properly.
-                toSave.password = draft.password // Keep existing hash
-            }
+            // Reset to the known bcrypt hash for an empty password.
+            // Setting specific passwords requires a Hotline client (bcrypt hashing).
+            toSave.password = "$2y$10$jINeSWW2yhkwf.O6Eznq6O2yfV.SGtj3rzx1cmEqB1LIlt3OG1nOq"
         }
         appState.saveAccount(toSave)
         changePassword = false
-        newPassword = ""
     }
 }
 
@@ -267,6 +249,14 @@ struct NewAccountSheet: View {
     @State private var login = ""
     var onSave: (UserAccount) -> Void
 
+    private var sanitizedLogin: String {
+        login.trimmingCharacters(in: .whitespaces).lowercased()
+    }
+
+    private var isValid: Bool {
+        AppState.isValidLogin(sanitizedLogin)
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             Text("New Account")
@@ -275,17 +265,22 @@ struct NewAccountSheet: View {
             TextField("Login name", text: $login)
                 .textFieldStyle(.roundedBorder)
 
+            if !login.trimmingCharacters(in: .whitespaces).isEmpty && !isValid {
+                Text("Only lowercase letters, numbers, hyphens, and underscores are allowed.")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
             HStack {
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 Button("Create") {
-                    let trimmed = login.trimmingCharacters(in: .whitespaces).lowercased()
-                    guard !trimmed.isEmpty else { return }
-                    onSave(UserAccount.newAccount(login: trimmed))
+                    guard isValid else { return }
+                    onSave(UserAccount.newAccount(login: sanitizedLogin))
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(login.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(!isValid)
             }
         }
         .padding()

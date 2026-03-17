@@ -4,12 +4,22 @@ struct ContentView: View {
     @Environment(AppState.self) private var appState
 
     var body: some View {
+        @Bindable var state = appState
         HSplitView {
             SettingsFormView()
                 .frame(minWidth: 320, idealWidth: 380)
 
             RightPanelView()
                 .frame(minWidth: 400, idealWidth: 520)
+        }
+        .sheet(isPresented: $state.showSetupWizard) {
+            SetupWizardView()
+                .environment(appState)
+        }
+        .onAppear {
+            if appState.isFirstLaunch {
+                appState.showSetupWizard = true
+            }
         }
     }
 }

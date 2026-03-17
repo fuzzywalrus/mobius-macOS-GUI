@@ -43,7 +43,7 @@ struct SettingsFormView: View {
                         TextField("Description", text: binding(\.description))
                         LabeledContent("Banner File") {
                             HStack {
-                                Text(appState.config.bannerFile.isEmpty ? "None" : appState.config.bannerFile)
+                                Text(appState.config.bannerFile.isEmpty ? "Default (banner.jpg)" : appState.config.bannerFile)
                                     .foregroundStyle(appState.config.bannerFile.isEmpty ? .secondary : .primary)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
@@ -95,7 +95,7 @@ struct SettingsFormView: View {
                             Spacer()
                             TextField("Port", value: Binding(
                                 get: { appState.serverPort },
-                                set: { appState.serverPort = $0 }
+                                set: { appState.serverPort = max(1, min(65535, $0)) }
                             ), format: .number.grouping(.never))
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 100)
@@ -354,7 +354,7 @@ struct IndentedDisclosureGroupStyle: DisclosureGroupStyle {
                 VStack(alignment: .leading, spacing: 12) {
                     configuration.content
                 }
-                .padding(.leading, 17)
+                .padding(.leading, 21)
                 .padding(.top, 8)
             }
         }
