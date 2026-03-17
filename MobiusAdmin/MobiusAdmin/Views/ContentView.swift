@@ -50,7 +50,7 @@ struct RightPanelView: View {
                     Circle()
                         .fill(statusColor)
                         .frame(width: 8, height: 8)
-                    Text(statusText)
+                    Text(appState.serverStatus.label)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -76,15 +76,6 @@ struct RightPanelView: View {
         case .starting: return .yellow
         case .stopped: return .gray
         case .error: return .red
-        }
-    }
-
-    private var statusText: String {
-        switch appState.serverStatus {
-        case .running: return "Running"
-        case .starting: return "Starting..."
-        case .stopped: return "Stopped"
-        case .error(let msg): return "Error: \(msg)"
         }
     }
 }

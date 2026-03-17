@@ -3,6 +3,7 @@ import SwiftUI
 
 /// Central application state, injected into the SwiftUI environment.
 @Observable
+@MainActor
 final class AppState {
     let processManager = ProcessManager()
 
@@ -39,6 +40,10 @@ final class AppState {
     var logLines: [LogLine] = []
     private let maxLogLines = 10_000
 
+    // MARK: - Save Debouncing
+
+    private var saveTask: Task<Void, Never>?
+
     // MARK: - Lifecycle
 
     init() {
@@ -65,8 +70,18 @@ final class AppState {
         }
     }
 
-    /// Saves the current config to config.yaml.
+    /// Saves the current config to config.yaml after a short debounce.
     func saveConfig() {
+        saveTask?.cancel()
+        saveTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            self?.saveConfigNow()
+        }
+    }
+
+    /// Saves the current config to config.yaml immediately.
+    func saveConfigNow() {
         guard !configDir.isEmpty else { return }
         let mgr = ConfigFileManager(configDir: URL(fileURLWithPath: configDir))
 
@@ -83,7 +98,7 @@ final class AppState {
         guard !configDir.isEmpty else { return }
         let mgr = ConfigFileManager(configDir: URL(fileURLWithPath: configDir))
         try mgr.ensureDirectoryStructure()
-        try mgr.save(config)
+        saveConfigNow()
     }
 
     // MARK: - Server Control
@@ -146,7 +161,9 @@ final class AppState {
     }
 
     private static var defaultConfigDir: String {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return NSTemporaryDirectory() + "MobiusAdmin/config"
+        }
         return appSupport.appendingPathComponent("MobiusAdmin/config").path
     }
 }

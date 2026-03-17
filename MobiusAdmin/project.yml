@@ -27,13 +27,16 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mobius.MobiusAdmin
         INFOPLIST_GENERATION_MODE: GeneratedByXcode
-        MARKETING_VERSION: "1.0.0"
+        MARKETING_VERSION: "0.0.1"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.utilities"
         INFOPLIST_KEY_NSMainNibFile: ""
         CODE_SIGN_ENTITLEMENTS: MobiusAdmin/Resources/MobiusAdmin.entitlements
         ENABLE_APP_SANDBOX: NO
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: $(CODE_SIGN_IDENTITY)
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
     postBuildScripts:
       - script: |
           SERVER_BIN="${SRCROOT}/../mobius-hotline-server"
@@ -41,8 +44,14 @@ targets:
             mkdir -p "${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"
             cp "$SERVER_BIN" "${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/mobius-hotline-server"
             chmod +x "${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/mobius-hotline-server"
-            # Ad-hoc sign so macOS firewall allows incoming connections
-            codesign -s - -f "${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/mobius-hotline-server"
+            # Sign the embedded binary — use the app's signing identity if set, otherwise ad-hoc
+            DEST="${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/mobius-hotline-server"
+            ENTITLEMENTS="${SRCROOT}/MobiusAdmin/Resources/Server.entitlements"
+            if [ -n "${EXPANDED_CODE_SIGN_IDENTITY}" ] && [ "${EXPANDED_CODE_SIGN_IDENTITY}" != "-" ]; then
+              codesign -s "${EXPANDED_CODE_SIGN_IDENTITY}" -f --options runtime --entitlements "${ENTITLEMENTS}" "${DEST}"
+            else
+              codesign -s - -f "${DEST}"
+            fi
           else
             echo "warning: mobius-hotline-server binary not found at $SERVER_BIN — run 'make server' first"
           fi

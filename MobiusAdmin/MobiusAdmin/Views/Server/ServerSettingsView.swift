@@ -31,20 +31,20 @@ struct SettingsFormView: View {
                 }
 
                 Section("General") {
-                    TextField("Server Name", text: binding(\.Name))
-                    TextField("Description", text: binding(\.Description))
+                    TextField("Server Name", text: binding(\.name))
+                    TextField("Description", text: binding(\.description))
                     LabeledContent("Banner File") {
                         HStack {
-                            Text(appState.config.BannerFile.isEmpty ? "None" : appState.config.BannerFile)
-                                .foregroundStyle(appState.config.BannerFile.isEmpty ? .secondary : .primary)
+                            Text(appState.config.bannerFile.isEmpty ? "None" : appState.config.bannerFile)
+                                .foregroundStyle(appState.config.bannerFile.isEmpty ? .secondary : .primary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
                             Button("Browse...") {
                                 pickBanner()
                             }
-                            if !appState.config.BannerFile.isEmpty {
+                            if !appState.config.bannerFile.isEmpty {
                                 Button(role: .destructive) {
-                                    appState.config.BannerFile = ""
+                                    appState.config.bannerFile = ""
                                     appState.saveConfig()
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
@@ -56,8 +56,8 @@ struct SettingsFormView: View {
                     }
                     LabeledContent("File Root") {
                         HStack {
-                            Text(appState.config.FileRoot.isEmpty ? "Not set" : appState.config.FileRoot)
-                                .foregroundStyle(appState.config.FileRoot.isEmpty ? .secondary : .primary)
+                            Text(appState.config.fileRoot.isEmpty ? "Not set" : appState.config.fileRoot)
+                                .foregroundStyle(appState.config.fileRoot.isEmpty ? .secondary : .primary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
                             Button("Browse...") {
@@ -90,20 +90,20 @@ struct SettingsFormView: View {
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 100)
                     }
-                    Toggle("Enable Bonjour", isOn: binding(\.EnableBonjour))
+                    Toggle("Enable Bonjour", isOn: binding(\.enableBonjour))
                 }
 
                 Section("Tracker Registration") {
-                    Toggle("Enable Tracker Registration", isOn: binding(\.EnableTrackerRegistration))
+                    Toggle("Enable Tracker Registration", isOn: binding(\.enableTrackerRegistration))
 
-                    if appState.config.EnableTrackerRegistration {
-                        ForEach(Array(appState.config.Trackers.enumerated()), id: \.offset) { index, tracker in
+                    if appState.config.enableTrackerRegistration {
+                        ForEach(Array(appState.config.trackers.enumerated()), id: \.offset) { index, tracker in
                             HStack {
                                 Text(tracker)
                                     .font(.system(.body, design: .monospaced))
                                 Spacer()
                                 Button(role: .destructive) {
-                                    appState.config.Trackers.remove(at: index)
+                                    appState.config.trackers.remove(at: index)
                                     appState.saveConfig()
                                 } label: {
                                     Image(systemName: "minus.circle.fill")
@@ -120,7 +120,7 @@ struct SettingsFormView: View {
                             Button("Add") {
                                 let trimmed = newTracker.trimmingCharacters(in: .whitespaces)
                                 guard !trimmed.isEmpty else { return }
-                                appState.config.Trackers.append(trimmed)
+                                appState.config.trackers.append(trimmed)
                                 newTracker = ""
                                 appState.saveConfig()
                             }
@@ -130,15 +130,15 @@ struct SettingsFormView: View {
                 }
 
                 Section("Files") {
-                    Toggle("Preserve Resource Forks", isOn: binding(\.PreserveResourceForks))
+                    Toggle("Preserve Resource Forks", isOn: binding(\.preserveResourceForks))
 
-                    ForEach(Array(appState.config.IgnoreFiles.enumerated()), id: \.offset) { index, pattern in
+                    ForEach(Array(appState.config.ignoreFiles.enumerated()), id: \.offset) { index, pattern in
                         HStack {
                             Text(pattern)
                                 .font(.system(.body, design: .monospaced))
                             Spacer()
                             Button(role: .destructive) {
-                                appState.config.IgnoreFiles.remove(at: index)
+                                appState.config.ignoreFiles.remove(at: index)
                                 appState.saveConfig()
                             } label: {
                                 Image(systemName: "minus.circle.fill")
@@ -155,7 +155,7 @@ struct SettingsFormView: View {
                         Button("Add") {
                             let trimmed = newIgnorePattern.trimmingCharacters(in: .whitespaces)
                             guard !trimmed.isEmpty else { return }
-                            appState.config.IgnoreFiles.append(trimmed)
+                            appState.config.ignoreFiles.append(trimmed)
                             newIgnorePattern = ""
                             appState.saveConfig()
                         }
@@ -164,29 +164,29 @@ struct SettingsFormView: View {
                 }
 
                 Section("News") {
-                    TextField("Date Format", text: binding(\.NewsDateFormat))
-                    TextField("Delimiter", text: binding(\.NewsDelimiter))
+                    TextField("Date Format", text: binding(\.newsDateFormat))
+                    TextField("Delimiter", text: binding(\.newsDelimiter))
                 }
 
                 Section("Limits") {
                     HStack {
                         Text("Max Downloads")
                         Spacer()
-                        TextField("0 = unlimited", value: binding(\.MaxDownloads), format: .number.grouping(.never))
+                        TextField("0 = unlimited", value: binding(\.maxDownloads), format: .number.grouping(.never))
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 100)
                     }
                     HStack {
                         Text("Max Downloads Per Client")
                         Spacer()
-                        TextField("0 = unlimited", value: binding(\.MaxDownloadsPerClient), format: .number.grouping(.never))
+                        TextField("0 = unlimited", value: binding(\.maxDownloadsPerClient), format: .number.grouping(.never))
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 100)
                     }
                     HStack {
                         Text("Max Connections Per IP")
                         Spacer()
-                        TextField("0 = unlimited", value: binding(\.MaxConnectionsPerIP), format: .number.grouping(.never))
+                        TextField("0 = unlimited", value: binding(\.maxConnectionsPerIP), format: .number.grouping(.never))
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 100)
                     }
@@ -246,7 +246,7 @@ struct SettingsFormView: View {
         panel.title = "Select Files directory"
 
         if panel.runModal() == .OK, let url = panel.url {
-            appState.config.FileRoot = url.path
+            appState.config.fileRoot = url.path
             appState.saveConfig()
         }
     }
@@ -269,7 +269,7 @@ struct SettingsFormView: View {
                     try fm.removeItem(at: dest)
                 }
                 try fm.copyItem(at: url, to: dest)
-                appState.config.BannerFile = filename
+                appState.config.bannerFile = filename
                 appState.saveConfig()
             } catch {
                 appState.configError = "Failed to copy banner: \(error.localizedDescription)"
@@ -323,10 +323,16 @@ struct TextFileEditorView: View {
     }
 
     private func load() {
+        guard FileManager.default.fileExists(atPath: filePath) else {
+            text = ""
+            error = "File not found. It will be created on save."
+            return
+        }
         do {
             text = try String(contentsOfFile: filePath, encoding: .utf8)
         } catch {
             text = ""
+            self.error = "Failed to load: \(error.localizedDescription)"
         }
     }
 

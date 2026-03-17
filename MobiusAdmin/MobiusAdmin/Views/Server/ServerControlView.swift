@@ -13,12 +13,12 @@ struct ServerControlView: View {
                     Circle()
                         .fill(statusColor)
                         .frame(width: 14, height: 14)
-                    Text(statusText)
+                    Text(appState.serverStatus.detailedLabel)
                         .font(.title2)
                 }
 
                 if appState.serverStatus.isRunning {
-                    Text("Hotline port \(appState.serverPort) \u{2022} API port \(appState.processManager.apiPort)")
+                    Text(verbatim: "Hotline port \(appState.serverPort) \u{2022} API port \(appState.processManager.apiPort)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -28,7 +28,7 @@ struct ServerControlView: View {
                     Button(action: { appState.startServer() }) {
                         Label("Start", systemImage: "play.fill")
                     }
-                    .disabled(appState.serverStatus.isRunning || !appState.hasBinary)
+                    .disabled(appState.serverStatus.isRunning)
 
                     Button(action: { appState.stopServer() }) {
                         Label("Stop", systemImage: "stop.fill")
@@ -38,7 +38,7 @@ struct ServerControlView: View {
                     Button(action: { appState.restartServer() }) {
                         Label("Restart", systemImage: "arrow.clockwise")
                     }
-                    .disabled(!appState.serverStatus.isRunning || !appState.hasBinary)
+                    .disabled(appState.serverStatus == .stopped || !appState.hasBinary)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
@@ -64,15 +64,6 @@ struct ServerControlView: View {
         case .starting: return .yellow
         case .stopped: return .gray
         case .error: return .red
-        }
-    }
-
-    private var statusText: String {
-        switch appState.serverStatus {
-        case .running: return "Server is running"
-        case .starting: return "Server is starting..."
-        case .stopped: return "Server is stopped"
-        case .error(let msg): return "Error: \(msg)"
         }
     }
 }

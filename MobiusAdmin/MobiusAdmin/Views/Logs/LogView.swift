@@ -6,6 +6,7 @@ struct LogView: View {
     @State private var autoScroll = true
     @State private var showStderr = true
     @State private var showStdout = true
+    @State private var filteredLines: [LogLine] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -45,7 +46,7 @@ struct LogView: View {
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                 }
-                .onChange(of: appState.logLines.count) {
+                .onChange(of: filteredLines.count) {
                     if autoScroll, let last = filteredLines.last {
                         proxy.scrollTo(last.id, anchor: .bottom)
                     }
@@ -54,10 +55,15 @@ struct LogView: View {
             .background(Color(nsColor: .textBackgroundColor))
         }
         .navigationTitle("Logs")
+        .onChange(of: appState.logLines.count) { updateFilteredLines() }
+        .onChange(of: filterText) { updateFilteredLines() }
+        .onChange(of: showStdout) { updateFilteredLines() }
+        .onChange(of: showStderr) { updateFilteredLines() }
+        .onAppear { updateFilteredLines() }
     }
 
-    private var filteredLines: [LogLine] {
-        appState.logLines.filter { line in
+    private func updateFilteredLines() {
+        filteredLines = appState.logLines.filter { line in
             let sourceMatch: Bool
             switch line.source {
             case .stdout: sourceMatch = showStdout
