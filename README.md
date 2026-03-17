@@ -4,6 +4,8 @@ A native macOS GUI for running a [Mobius](https://github.com/jhalter/mobius) Hot
 
 The app embeds the Mobius Hotline server binary (written in Go) and wraps it in a SwiftUI interface. Start, stop, and configure your server without touching a terminal.
 
+![MobiusAdmin screenshot](docs/screenshot.png)
+
 ## What is Hotline?
 
 [Hotline](https://en.wikipedia.org/wiki/Hotline_Communications) was a client-server platform from the late '90s for file sharing, chat, and message boards. It has a small but active community keeping it alive. Mobius is a modern, cross-platform Hotline server that's compatible with all the popular Hotline clients.

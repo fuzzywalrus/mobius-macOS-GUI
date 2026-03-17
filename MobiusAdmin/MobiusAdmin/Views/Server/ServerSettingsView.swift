@@ -9,6 +9,13 @@ struct SettingsFormView: View {
     @State private var showAgreementEditor = false
     @State private var showMessageBoardEditor = false
 
+    @State private var generalExpanded = true
+    @State private var networkExpanded = true
+    @State private var trackerExpanded = false
+    @State private var filesExpanded = false
+    @State private var newsExpanded = false
+    @State private var limitsExpanded = false
+
     var body: some View {
         @Bindable var state = appState
 
@@ -30,165 +37,206 @@ struct SettingsFormView: View {
                     }
                 }
 
-                Section("General") {
-                    TextField("Server Name", text: binding(\.name))
-                    TextField("Description", text: binding(\.description))
-                    LabeledContent("Banner File") {
-                        HStack {
-                            Text(appState.config.bannerFile.isEmpty ? "None" : appState.config.bannerFile)
-                                .foregroundStyle(appState.config.bannerFile.isEmpty ? .secondary : .primary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                            Button("Browse...") {
-                                pickBanner()
-                            }
-                            if !appState.config.bannerFile.isEmpty {
-                                Button(role: .destructive) {
-                                    appState.config.bannerFile = ""
-                                    appState.saveConfig()
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                    LabeledContent("File Root") {
-                        HStack {
-                            Text(appState.config.fileRoot.isEmpty ? "Not set" : appState.config.fileRoot)
-                                .foregroundStyle(appState.config.fileRoot.isEmpty ? .secondary : .primary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                            Button("Browse...") {
-                                pickFileRoot()
-                            }
-                        }
-                    }
-
-                    LabeledContent("Login Agreement") {
-                        Button("Edit...") {
-                            showAgreementEditor = true
-                        }
-                    }
-
-                    LabeledContent("Message Board") {
-                        Button("Edit...") {
-                            showMessageBoardEditor = true
-                        }
-                    }
-                }
-
-                Section("Network") {
-                    HStack {
-                        Text("Hotline Port")
-                        Spacer()
-                        TextField("Port", value: Binding(
-                            get: { appState.serverPort },
-                            set: { appState.serverPort = $0 }
-                        ), format: .number.grouping(.never))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 100)
-                    }
-                    Toggle("Enable Bonjour", isOn: binding(\.enableBonjour))
-                }
-
-                Section("Tracker Registration") {
-                    Toggle("Enable Tracker Registration", isOn: binding(\.enableTrackerRegistration))
-
-                    if appState.config.enableTrackerRegistration {
-                        ForEach(Array(appState.config.trackers.enumerated()), id: \.offset) { index, tracker in
+                Section {
+                    DisclosureGroup("General", isExpanded: $generalExpanded) {
+                        TextField("Server Name", text: binding(\.name))
+                        TextField("Description", text: binding(\.description))
+                        LabeledContent("Banner File") {
                             HStack {
-                                Text(tracker)
-                                    .font(.system(.body, design: .monospaced))
-                                Spacer()
-                                Button(role: .destructive) {
-                                    appState.config.trackers.remove(at: index)
-                                    appState.saveConfig()
-                                } label: {
-                                    Image(systemName: "minus.circle.fill")
-                                        .foregroundStyle(.red)
+                                Text(appState.config.bannerFile.isEmpty ? "None" : appState.config.bannerFile)
+                                    .foregroundStyle(appState.config.bannerFile.isEmpty ? .secondary : .primary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                Button("Browse...") {
+                                    pickBanner()
                                 }
-                                .buttonStyle(.plain)
+                                if !appState.config.bannerFile.isEmpty {
+                                    Button(role: .destructive) {
+                                        appState.config.bannerFile = ""
+                                        appState.saveConfig()
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        LabeledContent("File Root") {
+                            HStack {
+                                Text(appState.config.fileRoot.isEmpty ? "Not set" : appState.config.fileRoot)
+                                    .foregroundStyle(appState.config.fileRoot.isEmpty ? .secondary : .primary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                Button("Browse...") {
+                                    pickFileRoot()
+                                }
                             }
                         }
 
+                        LabeledContent("Login Agreement") {
+                            Button("Edit...") {
+                                showAgreementEditor = true
+                            }
+                        }
+
+                        LabeledContent("Message Board") {
+                            Button("Edit...") {
+                                showMessageBoardEditor = true
+                            }
+                        }
+                    }
+                }
+
+                Section {
+                    DisclosureGroup("Network", isExpanded: $networkExpanded) {
                         HStack {
-                            TextField("host:port", text: $newTracker)
+                            Text("Hotline Port")
+                            Spacer()
+                            TextField("Port", value: Binding(
+                                get: { appState.serverPort },
+                                set: { appState.serverPort = $0 }
+                            ), format: .number.grouping(.never))
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 100)
+                        }
+                        Toggle("Enable Bonjour", isOn: binding(\.enableBonjour))
+                    }
+                }
+
+                Section {
+                    DisclosureGroup("Tracker Registration", isExpanded: $trackerExpanded) {
+                        Toggle("Enable Tracker Registration", isOn: binding(\.enableTrackerRegistration))
+                            .padding(.bottom, 4)
+
+                        if appState.config.enableTrackerRegistration {
+                            VStack(spacing: 0) {
+                                ForEach(Array(appState.config.trackers.enumerated()), id: \.offset) { index, tracker in
+                                    HStack {
+                                        Text(tracker)
+                                            .font(.system(.body, design: .monospaced))
+                                        Spacer()
+                                        Button(role: .destructive) {
+                                            appState.config.trackers.remove(at: index)
+                                            appState.saveConfig()
+                                        } label: {
+                                            Image(systemName: "minus.circle.fill")
+                                                .foregroundStyle(.red)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 6)
+                                    .background(index.isMultiple(of: 2) ? Color.clear : Color.primary.opacity(0.04))
+                                }
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                            )
+                            .padding(.vertical, 4)
+
+                            HStack {
+                                TextField("tracker.example.com:5499", text: $newTracker, prompt: Text("tracker.example.com:5499"))
+                                    .textFieldStyle(.roundedBorder)
+                                    .font(.system(.body, design: .monospaced))
+                                Button("Add") {
+                                    let trimmed = newTracker.trimmingCharacters(in: .whitespaces)
+                                    guard !trimmed.isEmpty else { return }
+                                    appState.config.trackers.append(trimmed)
+                                    newTracker = ""
+                                    appState.saveConfig()
+                                }
+                                .disabled(newTracker.trimmingCharacters(in: .whitespaces).isEmpty)
+                            }
+                        }
+                    }
+                }
+
+                Section {
+                    DisclosureGroup("Files", isExpanded: $filesExpanded) {
+                        Toggle("Preserve Resource Forks", isOn: binding(\.preserveResourceForks))
+                            .padding(.bottom, 4)
+
+                        if !appState.config.ignoreFiles.isEmpty {
+                            VStack(spacing: 0) {
+                                ForEach(Array(appState.config.ignoreFiles.enumerated()), id: \.offset) { index, pattern in
+                                    HStack {
+                                        Text(pattern)
+                                            .font(.system(.body, design: .monospaced))
+                                        Spacer()
+                                        Button(role: .destructive) {
+                                            appState.config.ignoreFiles.remove(at: index)
+                                            appState.saveConfig()
+                                        } label: {
+                                            Image(systemName: "minus.circle.fill")
+                                                .foregroundStyle(.red)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 6)
+                                    .background(index.isMultiple(of: 2) ? Color.clear : Color.primary.opacity(0.04))
+                                }
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                            )
+                            .padding(.vertical, 4)
+                        }
+
+                        HStack {
+                            TextField("Regex pattern", text: $newIgnorePattern, prompt: Text("^\\..*"))
                                 .textFieldStyle(.roundedBorder)
                                 .font(.system(.body, design: .monospaced))
                             Button("Add") {
-                                let trimmed = newTracker.trimmingCharacters(in: .whitespaces)
+                                let trimmed = newIgnorePattern.trimmingCharacters(in: .whitespaces)
                                 guard !trimmed.isEmpty else { return }
-                                appState.config.trackers.append(trimmed)
-                                newTracker = ""
+                                appState.config.ignoreFiles.append(trimmed)
+                                newIgnorePattern = ""
                                 appState.saveConfig()
                             }
-                            .disabled(newTracker.trimmingCharacters(in: .whitespaces).isEmpty)
+                            .disabled(newIgnorePattern.trimmingCharacters(in: .whitespaces).isEmpty)
                         }
                     }
                 }
 
-                Section("Files") {
-                    Toggle("Preserve Resource Forks", isOn: binding(\.preserveResourceForks))
-
-                    ForEach(Array(appState.config.ignoreFiles.enumerated()), id: \.offset) { index, pattern in
-                        HStack {
-                            Text(pattern)
-                                .font(.system(.body, design: .monospaced))
-                            Spacer()
-                            Button(role: .destructive) {
-                                appState.config.ignoreFiles.remove(at: index)
-                                appState.saveConfig()
-                            } label: {
-                                Image(systemName: "minus.circle.fill")
-                                    .foregroundStyle(.red)
-                            }
-                            .buttonStyle(.plain)
+                Section {
+                    DisclosureGroup("News", isExpanded: $newsExpanded) {
+                        Picker("Date Format", selection: binding(\.newsDateFormat)) {
+                            Text("Jan02 15:04 (default)").tag("Jan02 15:04")
+                            Text("01/02/2006 3:04 PM (US)").tag("01/02/2006 3:04 PM")
+                            Text("02/01/2006 15:04 (Europe)").tag("02/01/2006 15:04")
+                            Text("2006-01-02 15:04 (ISO)").tag("2006-01-02 15:04")
+                            Text("Mon Jan 2 15:04:05 (Full)").tag("Mon Jan 2 15:04:05")
                         }
-                    }
-
-                    HStack {
-                        TextField("Regex pattern", text: $newIgnorePattern)
-                            .textFieldStyle(.roundedBorder)
-                            .font(.system(.body, design: .monospaced))
-                        Button("Add") {
-                            let trimmed = newIgnorePattern.trimmingCharacters(in: .whitespaces)
-                            guard !trimmed.isEmpty else { return }
-                            appState.config.ignoreFiles.append(trimmed)
-                            newIgnorePattern = ""
-                            appState.saveConfig()
-                        }
-                        .disabled(newIgnorePattern.trimmingCharacters(in: .whitespaces).isEmpty)
+                        TextField("Delimiter", text: binding(\.newsDelimiter))
                     }
                 }
 
-                Section("News") {
-                    TextField("Date Format", text: binding(\.newsDateFormat))
-                    TextField("Delimiter", text: binding(\.newsDelimiter))
-                }
-
-                Section("Limits") {
-                    HStack {
-                        Text("Max Downloads")
-                        Spacer()
-                        TextField("0 = unlimited", value: binding(\.maxDownloads), format: .number.grouping(.never))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 100)
-                    }
-                    HStack {
-                        Text("Max Downloads Per Client")
-                        Spacer()
-                        TextField("0 = unlimited", value: binding(\.maxDownloadsPerClient), format: .number.grouping(.never))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 100)
-                    }
-                    HStack {
-                        Text("Max Connections Per IP")
-                        Spacer()
-                        TextField("0 = unlimited", value: binding(\.maxConnectionsPerIP), format: .number.grouping(.never))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 100)
+                Section {
+                    DisclosureGroup("Limits", isExpanded: $limitsExpanded) {
+                        LabeledContent("Max Downloads") {
+                            TextField("", value: binding(\.maxDownloads), format: .number.grouping(.never))
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 60)
+                        }
+                        LabeledContent("Max Downloads Per Client") {
+                            TextField("", value: binding(\.maxDownloadsPerClient), format: .number.grouping(.never))
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 60)
+                        }
+                        LabeledContent("Max Connections Per IP") {
+                            TextField("", value: binding(\.maxConnectionsPerIP), format: .number.grouping(.never))
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 60)
+                        }
+                        Text("Set to 0 for unlimited")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -200,6 +248,8 @@ struct SettingsFormView: View {
                 }
             }
             .formStyle(.grouped)
+            .disclosureGroupStyle(IndentedDisclosureGroupStyle())
+            .environment(\.defaultMinListRowHeight, 36)
         }
         .sheet(isPresented: $showAgreementEditor) {
             TextFileEditorView(
@@ -273,6 +323,39 @@ struct SettingsFormView: View {
                 appState.saveConfig()
             } catch {
                 appState.configError = "Failed to copy banner: \(error.localizedDescription)"
+            }
+        }
+    }
+}
+
+/// A DisclosureGroupStyle that indents expanded content to align with the label text.
+struct IndentedDisclosureGroupStyle: DisclosureGroupStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation {
+                    configuration.isExpanded.toggle()
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "chevron.right")
+                        .rotationEffect(configuration.isExpanded ? .degrees(90) : .zero)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 13)
+                    configuration.label
+                        .font(.headline)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if configuration.isExpanded {
+                VStack(alignment: .leading, spacing: 12) {
+                    configuration.content
+                }
+                .padding(.leading, 17)
+                .padding(.top, 8)
             }
         }
     }

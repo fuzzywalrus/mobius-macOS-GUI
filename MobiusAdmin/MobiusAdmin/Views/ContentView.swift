@@ -45,6 +45,33 @@ struct RightPanelView: View {
 
                 Spacer()
 
+                // Server controls
+                HStack(spacing: 4) {
+                    Button(action: { appState.startServer() }) {
+                        Image(systemName: "play.fill")
+                    }
+                    .disabled(appState.serverStatus.isRunning)
+                    .help("Start Server")
+
+                    Button(action: { appState.stopServer() }) {
+                        Image(systemName: "stop.fill")
+                    }
+                    .disabled(!appState.serverStatus.isRunning)
+                    .help("Stop Server")
+
+                    Button(action: { appState.restartServer() }) {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .disabled(appState.serverStatus == .stopped || !appState.hasBinary)
+                    .help("Restart Server")
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+
+                Divider()
+                    .frame(height: 16)
+                    .padding(.horizontal, 6)
+
                 // Status indicator
                 HStack(spacing: 6) {
                     Circle()
