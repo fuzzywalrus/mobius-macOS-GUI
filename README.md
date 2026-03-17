@@ -64,6 +64,9 @@ APPLE_PASSWORD=your-app-specific-password
 APPLE_TEAM_ID=YOUR_TEAM_ID
 APPLE_SIGNING_IDENTITY=Developer ID Application: Your Name (YOUR_TEAM_ID)
 ```
+## Pre macOS 14 Support
+
+Currently I'm using Go 1.26 supports macOS 12 (Monterey) as the minimum, and  some newer SwiftUI APIs (like the @Observable macro which requires macOS 14). If someone is so inclined, macOS 12 wouldn't require much work. If someone is willing to try their hand at Go 1.22 with a fork, this could be ported to as early as 10.15 Catalina.
 
 ## Configuration
 
