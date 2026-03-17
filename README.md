@@ -1,248 +1,96 @@
-# What is this nonsense?
+# MobiusAdmin
 
-Mobius is a great Hotline server but what Mac users crave is point and click UIs. This is meant to be a GUI wrapper around the Golang binary for macOS and only macOS as I'm not about to suffer making this for other OSes.
+A native macOS GUI for running a [Mobius](https://github.com/jhalter/mobius) Hotline server. Instead of fiddling with the command line, you get a point-and-click app that manages the server process, configuration, and logs.
 
+The app embeds the Mobius Hotline server binary (written in Go) and wraps it in a SwiftUI interface. Start, stop, and configure your server without touching a terminal.
 
+## What is Hotline?
 
-<!--<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="dark_logo.png">
-  <source media="(prefers-color-scheme: light)" srcset="light_logo.png">
-  <img src="dark_logo.png" alt="Mobius Logo">
-</picture>
--->
+[Hotline](https://en.wikipedia.org/wiki/Hotline_Communications) was a client-server platform from the late '90s for file sharing, chat, and message boards. It has a small but active community keeping it alive. Mobius is a modern, cross-platform Hotline server that's compatible with all the popular Hotline clients.
 
-# Mobius
+## Features
 
-Mobius is a cross-platform command line [Hotline](https://en.wikipedia.org/wiki/Hotline_Communications) server implemented in Golang.
-
-- **Project Goal:** Make it simple to run a Hotline server on macOS, Linux, and Windows, with full compatibility for all popular Hotline clients.
-
+- Start, stop, and restart the server with one click
+- Edit server name, description, port, and tracker registration from the GUI
+- Browse and set your file root directory
+- Edit the login agreement and message board
+- Set a server banner image
+- Live log viewer with stdout/stderr output
+- Server process is automatically stopped when the app quits
+- Fully signed and notarized for macOS Gatekeeper
 
 ## Installation
 
-Mobius is distributed through a single binary.
+### Download
 
-Depending on your platform and preferences, you can acquire the binary in the following ways:
+Grab the latest `.dmg` from the [Releases](https://github.com/jhalter/mobius/releases) page, open it, and drag MobiusAdmin to your Applications folder.
 
 ### Build from source
 
-1. Install [Go](https://go.dev) if needed
-2. Run `make server`
-
-### Download pre-built release
-
-See [Releases](https://github.com/jhalter/mobius/releases) page.
-
-
-### Docker
-
-To run a Hotline server with a default, sample configuration with ports forwarded from the host OS to the container:
-
-	docker run --rm -p 5500:5500 -p 5501:5501 ghcr.io/jhalter/mobius-hotline-server:latest
-
-You can now connect to localhost:5500 with your favorite Hotline client and play around, but all changes will be lost on container restart.
-
-To serve files from the host OS and persist configuration changes, you'll want to set up a [bind mount](https://docs.docker.com/storage/bind-mounts/) that maps a directory from the host into the container.
-
-To do this, create a directory in a location of your choice on the host OS.  For clarity, we'll assign the path to the `HLFILES` environment variable and re-use it.
-
-Then run the docker command with `-v` and `-init` like so:
-
-```
-export HLFILES=/home/myuser/hotline-files
-mdkir $HLFILES
-
-sudo docker run \
-    --pull=always \
-    --rm \
-    -p 5500:5500 \
-    -p 5501:5501 \
-    -v $HLFILES:/usr/local/var/mobius/config \
-    ghcr.io/jhalter/mobius-hotline-server:latest \
-    -init
-```
-
-It's a good security practice to run your server as a non-root user, which also happens to make editing the configuration files easier from the host OS.
-
-To do this, add the `--user` flag to the docker run arguments with a user ID and group ID of a user on the host OS.
-
-`--user 1001:1001`
-
-### Homebrew
-
-For macOS the easiest path to installation is through Homebrew, as this works around Apple's notarization requirements for downloaded pre-compiled binaries by compiling the binary on your system during brew installation.
-
-To install the server:
-
-    brew install jhalter/mobius-hotline-server/mobius-hotline-server
-
-After installation `mobius-hotline-server` will be installed at `$HOMEBREW_PREFIX/bin/mobius-hotline-server` and should be in your $PATH.
-
-The server config directory will be created under `$HOMEBREW_PREFIX/var/mobius`.
-
-To start the service:
-
-`brew services start mobius-hotline-server`
-
-
-## Server Configuration
-
-After you have a server binary, the next step is to configure the server.
-
-### Configuration directory
-
-Mobius stores its configuration and server state in a directory tree:
-
-```
-config
-├── Agreement.txt
-├── Files
-│   └── hello.txt
-├── MessageBoard.txt
-├── ThreadedNews.yaml
-├── Users
-│   ├── admin.yaml
-│   └── guest.yaml
-├── banner.jpg
-└── config.yaml
-```
-
-If you acquired the server binary by downloading it or compiling it, this directory doesn't exist yet!  But you can generate it by running the the server with the `-init` flag:
-
-`./mobius-hotline-server -init -config example-config-dir`
-
-Brew users can find the config directory in `$HOMEBREW_PREFIX/var/mobius`.
-
-Within this directory some files are intended to be edited to customize the server, while others are not.
-
---- 
-
-* 🛠️ Edit this file to customize your server.
-* ⚠️ Avoid manual edits outside of special circumstances (e.g. remove offending news content).
-
----
-
-🛠️ `Agreement.text` - The server agreement sent to users after they join the server.
-
-🛠️ `Files` - Home of your warez or any other files you'd like to share.
-
-⚠️ `MessageBoard.txt` - Plain text file containing the server's message board.  No need to edit this.
-
-⚠️ `ThreadedNews.yaml` - YAML file containing the server's threaded news.  No need to edit this.
-
-⚠️ `Users` - Directory containing user account YAML files.  No need to edit this.
-
-🛠️ `banner.jpg` - Path to server banner image.
-
-🛠️ `config.yaml` - Edit to set your server name, description, and enable tracker registration.
-
-
-### User accounts
-
-The default installation includes two users: 
-
-* guest (no password) 
-* admin (default password admin).
-
-User administration should be performed from a Hotline client.  Avoid editing the files under the `Users` directory.
-
-## Run the server
-
-By default running `mobius-hotline-server` will listen on ports 5500/5501 of all interfaces with info level logging to STDOUT.
-
-Use the -h or -help flag for a list of options:
-
-```
-$ mobius-hotline-server -h
-Usage of mobius-hotline-server:
-  -bind int
-    	Base Hotline server port.  File transfer port is base port + 1. (default 5500)
-  -config string
-    	Path to config root (default "/usr/local/var/mobius/config/")
-  -init
-    	Populate the config dir with default configuration
-  -interface string
-    	IP addr of interface to listen on.  Defaults to all interfaces.
-  -log-file string
-    	Path to log file
-  -log-level string
-    	Log level (default "info")
-  -stats-port string
-    	Enable stats HTTP endpoint on address and port
-  -version
-    	Print version and exit
-```
-
-
-To run as a systemd service, refer to this sample unit file: [mobius-hotline-server.service](https://github.com/jhalter/mobius/blob/master/cmd/mobius-hotline-server/mobius-hotline-server.service)
-
-## HTTP API
-
-The Mobius server includes an optional HTTP API for server administration and user management.
-
-### Configuration
-
-To enable the API, use the `--api-addr` flag with an IP and port:
+Requirements:
+- Xcode 15+
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
+- [Go](https://go.dev) (to build the server binary)
 
 ```bash
-mobius-hotline-server --api-addr=127.0.0.1:5503
+# Build the server binary
+make server
+
+# Build the app (debug)
+make gui
+
+# Build a signed release
+make gui-release
+
+# Build, notarize, and staple
+make gui-notarize
 ```
 
-### Authentication
+For release and notarization builds, create a `.env` file in the repo root:
 
-The API supports optional authentication via API key. Set the `--api-key` flag:
-
-```bash
-mobius-hotline-server --api-addr=127.0.0.1:5503 --api-key=your-secret-key
+```
+APPLE_ID=your@email.com
+APPLE_PASSWORD=your-app-specific-password
+APPLE_TEAM_ID=YOUR_TEAM_ID
+APPLE_SIGNING_IDENTITY=Developer ID Application: Your Name (YOUR_TEAM_ID)
 ```
 
-Include the API key in the `X-API-Key` header:
+## Configuration
 
-```bash
-curl -H "X-API-Key: your-secret-key" localhost:5503/api/v1/stats
+On first launch the app creates a config directory at:
+
+```
+~/Library/Application Support/MobiusAdmin/config/
 ```
 
-### API Documentation
+This contains the standard Mobius config layout:
 
-Complete API documentation is available in the [OpenAPI specification](api.yaml).
-
-### Endpoints
-
-#### User Management
-
-- `GET /api/v1/online` - List currently online users
-- `POST /api/v1/ban` - Ban a user by username, nickname, or IP
-- `POST /api/v1/unban` - Remove a ban
-- `GET /api/v1/banned/ips` - List banned IP addresses
-- `GET /api/v1/banned/usernames` - List banned usernames  
-- `GET /api/v1/banned/nicknames` - List banned nicknames
-
-#### Server Administration
-
-- `GET /api/v1/stats` - Get server statistics
-- `POST /api/v1/reload` - Reload configuration
-- `POST /api/v1/shutdown` - Shutdown server
-
-### Examples
-
-**Get online users:**
-```bash
-curl localhost:5503/api/v1/online
+```
+config/
+├── Agreement.txt       # Login agreement shown to connecting users
+├── Files/              # Shared files directory
+├── MessageBoard.txt    # Server message board
+├── ThreadedNews.yaml   # Threaded news data
+├── Users/              # User account files
+│   ├── admin.yaml      # Default admin (password: admin)
+│   └── guest.yaml      # Default guest (no password)
+├── banner.jpg          # Server banner image
+└── config.yaml         # Server settings
 ```
 
-**Ban a user:**
-```bash
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"username":"baduser"}' \
-  localhost:5503/api/v1/ban
-```
+You can change the config directory and file root from the Settings panel in the app.
 
-**Get server stats:**
-```bash
-curl localhost:5503/api/v1/stats | jq .
-```
+## Default Accounts
 
-**Shutdown server:**
-```bash
-curl -X POST -d 'Server maintenance' localhost:5503/api/v1/shutdown
-```
+- **guest** — no password, can download files and chat
+- **admin** — password `admin`, full access
+
+Change the admin password from a Hotline client after your first login.
+
+## Network
+
+The server listens on port **5500** by default (file transfers on 5501). To allow connections from outside your LAN, you'll need to forward these ports on your router.
+
+## License
+
+See [LICENSE.txt](LICENSE.txt).

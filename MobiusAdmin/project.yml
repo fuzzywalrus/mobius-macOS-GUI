@@ -32,11 +32,19 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.utilities"
         INFOPLIST_KEY_NSMainNibFile: ""
-        CODE_SIGN_ENTITLEMENTS: MobiusAdmin/Resources/MobiusAdmin.entitlements
         ENABLE_APP_SANDBOX: NO
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: $(CODE_SIGN_IDENTITY)
         DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
+      configs:
+        Debug:
+          CODE_SIGN_ENTITLEMENTS: MobiusAdmin/Resources/MobiusAdmin.entitlements
+          ENABLE_HARDENED_RUNTIME: NO
+        Release:
+          CODE_SIGN_ENTITLEMENTS: MobiusAdmin/Resources/MobiusAdminRelease.entitlements
+          ENABLE_HARDENED_RUNTIME: YES
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
+          OTHER_CODE_SIGN_FLAGS: "--timestamp"
     postBuildScripts:
       - script: |
           SERVER_BIN="${SRCROOT}/../mobius-hotline-server"
