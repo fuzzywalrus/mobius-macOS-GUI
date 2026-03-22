@@ -90,6 +90,16 @@ actor APIClient {
         _ = try await post("/api/v1/reload", body: nil as [String: String]?)
     }
 
+    func shutdown(message: String) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("/api/v1/shutdown"))
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
+        request.httpBody = Data(message.utf8)
+        let (data, response) = try await session.data(for: request)
+        try validateResponse(response, data: data)
+    }
+
     // MARK: - Private
 
     private func get(_ path: String) async throws -> Data {

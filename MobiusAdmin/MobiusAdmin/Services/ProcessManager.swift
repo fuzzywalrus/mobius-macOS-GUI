@@ -1,5 +1,17 @@
 import Foundation
 
+/// Bundles all CLI arguments for launching the server binary.
+struct ServerLaunchConfig {
+    let configDir: URL
+    let serverPort: Int
+    let logLevel: String
+    let logFilePath: String
+    let networkInterface: String
+    let tlsCertPath: String
+    let tlsKeyPath: String
+    let tlsPort: Int
+}
+
 /// Manages the lifecycle of the mobius-hotline-server binary as a child process.
 @Observable
 @MainActor
@@ -62,7 +74,7 @@ final class ProcessManager {
     }
 
     /// Start the server binary with the given configuration.
-    func start(configDir: URL, serverPort: Int) throws {
+    func start(config: ServerLaunchConfig) throws {
         guard process == nil else { return }
 
         guard let binaryURL = Self.embeddedBinaryURL else {
@@ -71,14 +83,14 @@ final class ProcessManager {
         }
 
         // Validate port range before converting to UInt16
-        guard (1...65535).contains(serverPort) else {
+        guard (1...65535).contains(config.serverPort) else {
             status = .error("Port must be between 1 and 65535.")
             return
         }
 
         // Check if the port is already in use before attempting to start
-        if Self.isPortInUse(port: UInt16(serverPort)) {
-            status = .error("Port \(serverPort) is already in use. Stop any existing server first.")
+        if Self.isPortInUse(port: UInt16(config.serverPort)) {
+            status = .error("Port \(config.serverPort) is already in use. Stop any existing server first.")
             return
         }
 
@@ -93,13 +105,23 @@ final class ProcessManager {
         proc.qualityOfService = .userInitiated
         // Ensure child process belongs to our process group so it is
         // killed automatically if the parent process is terminated.
-        proc.arguments = [
-            "--config", configDir.path,
+        var args = [
+            "--config", config.configDir.path,
             "--api-addr", "127.0.0.1:\(apiPort)",
             "--api-key", apiKey,
-            "--bind", "\(serverPort)",
-            "--log-level", "info",
+            "--bind", "\(config.serverPort)",
+            "--log-level", config.logLevel,
         ]
+        if !config.logFilePath.isEmpty {
+            args += ["--log-file", config.logFilePath]
+        }
+        if !config.networkInterface.isEmpty {
+            args += ["--interface", config.networkInterface]
+        }
+        if !config.tlsCertPath.isEmpty && !config.tlsKeyPath.isEmpty {
+            args += ["--tls-cert", config.tlsCertPath, "--tls-key", config.tlsKeyPath, "--tls-port", "\(config.tlsPort)"]
+        }
+        proc.arguments = args
 
         // Set up pipes for log capture
         let stdout = Pipe()
@@ -174,9 +196,9 @@ final class ProcessManager {
     }
 
     /// Restart the server with the same configuration.
-    func restart(configDir: URL, serverPort: Int) throws {
+    func restart(config: ServerLaunchConfig) throws {
         stop()
-        try start(configDir: configDir, serverPort: serverPort)
+        try start(config: config)
     }
 
     private func cleanupProcess() {

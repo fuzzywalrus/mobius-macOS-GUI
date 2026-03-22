@@ -16,6 +16,7 @@ struct ServerConfig: Codable, Equatable {
     var maxConnectionsPerIP: Int = 0
     var ignoreFiles: [String] = ["^\\.", "^@"]
     var enableBonjour: Bool = false
+    var encoding: String = ""
 
     enum CodingKeys: String, CodingKey {
         case name = "Name"
@@ -32,5 +33,6 @@ struct ServerConfig: Codable, Equatable {
         case maxConnectionsPerIP = "MaxConnectionsPerIP"
         case ignoreFiles = "IgnoreFiles"
         case enableBonjour = "EnableBonjour"
+        case encoding = "Encoding"
     }
 }

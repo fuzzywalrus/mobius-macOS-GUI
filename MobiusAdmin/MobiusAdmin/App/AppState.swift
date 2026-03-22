@@ -31,6 +31,43 @@ final class AppState {
         set { UserDefaults.standard.set(newValue, forKey: "serverPort") }
     }
 
+    var logLevel: String {
+        get { UserDefaults.standard.string(forKey: "logLevel") ?? "info" }
+        set { UserDefaults.standard.set(newValue, forKey: "logLevel") }
+    }
+
+    var logFilePath: String {
+        get { UserDefaults.standard.string(forKey: "logFilePath") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "logFilePath") }
+    }
+
+    var networkInterface: String {
+        get { UserDefaults.standard.string(forKey: "networkInterface") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "networkInterface") }
+    }
+
+    var tlsCertPath: String {
+        get { UserDefaults.standard.string(forKey: "tlsCertPath") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "tlsCertPath") }
+    }
+
+    var tlsKeyPath: String {
+        get { UserDefaults.standard.string(forKey: "tlsKeyPath") ?? "" }
+        set { UserDefaults.standard.set(newValue, forKey: "tlsKeyPath") }
+    }
+
+    var tlsPort: Int {
+        get {
+            let port = UserDefaults.standard.integer(forKey: "tlsPort")
+            return port > 0 ? port : 5600
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "tlsPort") }
+    }
+
+    var tlsEnabled: Bool {
+        !tlsCertPath.isEmpty && !tlsKeyPath.isEmpty
+    }
+
     // MARK: - Config State
 
     var config = ServerConfig()
@@ -39,6 +76,8 @@ final class AppState {
     // MARK: - Setup Wizard
 
     var showSetupWizard = false
+    var showShutdownAlert = false
+    var shutdownMessage = "Server is shutting down."
 
     var isFirstLaunch: Bool {
         let mgr = ConfigFileManager(configDir: URL(fileURLWithPath: configDir))
@@ -141,6 +180,19 @@ final class AppState {
         ProcessManager.embeddedBinaryURL != nil
     }
 
+    private var launchConfig: ServerLaunchConfig {
+        ServerLaunchConfig(
+            configDir: URL(fileURLWithPath: configDir),
+            serverPort: serverPort,
+            logLevel: logLevel,
+            logFilePath: logFilePath,
+            networkInterface: networkInterface,
+            tlsCertPath: tlsCertPath,
+            tlsKeyPath: tlsKeyPath,
+            tlsPort: tlsPort
+        )
+    }
+
     func startServer() {
         guard !configDir.isEmpty else { return }
 
@@ -156,15 +208,44 @@ final class AppState {
             ensureDefaultBanner()
         }
 
-        let configURL = URL(fileURLWithPath: configDir)
         do {
-            try processManager.start(configDir: configURL, serverPort: serverPort)
+            try processManager.start(config: launchConfig)
         } catch {
             // Error is captured in processManager.status
         }
     }
 
     func stopServer() {
+        if apiClient != nil {
+            showShutdownAlert = true
+        } else {
+            forceStop()
+        }
+    }
+
+    func confirmShutdown() {
+        let message = shutdownMessage
+        showShutdownAlert = false
+        shutdownMessage = "Server is shutting down."
+
+        if let client = apiClient {
+            Task {
+                do {
+                    try await client.shutdown(message: message)
+                    try? await Task.sleep(for: .seconds(2))
+                } catch {
+                    // If API call fails, fall through to SIGTERM
+                }
+                processManager.stop()
+                onlineUsers = []
+                serverStats = nil
+            }
+        } else {
+            forceStop()
+        }
+    }
+
+    func forceStop() {
         processManager.stop()
         onlineUsers = []
         serverStats = nil
@@ -184,8 +265,7 @@ final class AppState {
             ensureDefaultBanner()
         }
 
-        let configURL = URL(fileURLWithPath: configDir)
-        try? processManager.restart(configDir: configURL, serverPort: serverPort)
+        try? processManager.restart(config: launchConfig)
     }
 
     /// Ask the running server to reload its configuration from disk.

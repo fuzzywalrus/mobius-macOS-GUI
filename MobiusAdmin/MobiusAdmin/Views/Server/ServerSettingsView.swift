@@ -11,6 +11,8 @@ struct SettingsFormView: View {
 
     @State private var generalExpanded = true
     @State private var networkExpanded = true
+    @State private var tlsExpanded = false
+    @State private var loggingExpanded = false
     @State private var trackerExpanded = false
     @State private var filesExpanded = false
     @State private var newsExpanded = false
@@ -85,6 +87,11 @@ struct SettingsFormView: View {
                                 showMessageBoardEditor = true
                             }
                         }
+                        Picker("Text Encoding", selection: binding(\.encoding)) {
+                            Text("Default (auto)").tag("")
+                            Text("Mac Roman").tag("macintosh")
+                            Text("UTF-8").tag("utf8")
+                        }
                     }
                 }
 
@@ -101,6 +108,114 @@ struct SettingsFormView: View {
                             .frame(width: 100)
                         }
                         Toggle("Enable Bonjour", isOn: binding(\.enableBonjour))
+                        HStack {
+                            Text("Interface")
+                            Spacer()
+                            TextField("All interfaces", text: Binding(
+                                get: { appState.networkInterface },
+                                set: { appState.networkInterface = $0 }
+                            ))
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 160)
+                        }
+                        Text("Leave blank to listen on all interfaces")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Section {
+                    DisclosureGroup("TLS / SSL", isExpanded: $tlsExpanded) {
+                        LabeledContent("Certificate") {
+                            HStack {
+                                Text(appState.tlsCertPath.isEmpty ? "Not configured" : appState.tlsCertPath)
+                                    .foregroundStyle(appState.tlsCertPath.isEmpty ? .secondary : .primary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                Button("Browse...") { pickTLSCert() }
+                                if !appState.tlsCertPath.isEmpty {
+                                    Button(role: .destructive) {
+                                        appState.tlsCertPath = ""
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        LabeledContent("Private Key") {
+                            HStack {
+                                Text(appState.tlsKeyPath.isEmpty ? "Not configured" : appState.tlsKeyPath)
+                                    .foregroundStyle(appState.tlsKeyPath.isEmpty ? .secondary : .primary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                Button("Browse...") { pickTLSKey() }
+                                if !appState.tlsKeyPath.isEmpty {
+                                    Button(role: .destructive) {
+                                        appState.tlsKeyPath = ""
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        HStack {
+                            Text("TLS Port")
+                            Spacer()
+                            TextField("Port", value: Binding(
+                                get: { appState.tlsPort },
+                                set: { appState.tlsPort = max(1, min(65535, $0)) }
+                            ), format: .number.grouping(.never))
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 100)
+                        }
+                        if appState.tlsEnabled {
+                            Label("TLS will be enabled on next server start", systemImage: "lock.fill")
+                                .font(.caption)
+                                .foregroundStyle(.green)
+                        } else {
+                            Text("Provide both a certificate and key to enable TLS")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                Section {
+                    DisclosureGroup("Logging", isExpanded: $loggingExpanded) {
+                        Picker("Log Level", selection: Binding(
+                            get: { appState.logLevel },
+                            set: { appState.logLevel = $0 }
+                        )) {
+                            Text("Debug").tag("debug")
+                            Text("Info").tag("info")
+                            Text("Warn").tag("warn")
+                            Text("Error").tag("error")
+                        }
+                        LabeledContent("Log File") {
+                            HStack {
+                                Text(appState.logFilePath.isEmpty ? "None (stdout only)" : appState.logFilePath)
+                                    .foregroundStyle(appState.logFilePath.isEmpty ? .secondary : .primary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                Button("Browse...") { pickLogFile() }
+                                if !appState.logFilePath.isEmpty {
+                                    Button(role: .destructive) {
+                                        appState.logFilePath = ""
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        Text("Changes take effect on next server start")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -298,6 +413,37 @@ struct SettingsFormView: View {
         if panel.runModal() == .OK, let url = panel.url {
             appState.config.fileRoot = url.path
             appState.saveConfig()
+        }
+    }
+
+    private func pickTLSCert() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.title = "Select TLS Certificate"
+        if panel.runModal() == .OK, let url = panel.url {
+            appState.tlsCertPath = url.path
+        }
+    }
+
+    private func pickTLSKey() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.title = "Select TLS Private Key"
+        if panel.runModal() == .OK, let url = panel.url {
+            appState.tlsKeyPath = url.path
+        }
+    }
+
+    private func pickLogFile() {
+        let panel = NSSavePanel()
+        panel.title = "Choose Log File Location"
+        panel.nameFieldStringValue = "mobius-server.log"
+        if panel.runModal() == .OK, let url = panel.url {
+            appState.logFilePath = url.path
         }
     }
 

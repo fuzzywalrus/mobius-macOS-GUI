@@ -27,7 +27,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mobius.MobiusAdmin
         INFOPLIST_GENERATION_MODE: GeneratedByXcode
-        MARKETING_VERSION: "0.0.4"
+        MARKETING_VERSION: "0.0.5"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.utilities"

@@ -16,6 +16,18 @@ struct ContentView: View {
             SetupWizardView()
                 .environment(appState)
         }
+        .alert("Shutdown Server", isPresented: $state.showShutdownAlert) {
+            TextField("Shutdown message", text: $state.shutdownMessage)
+            Button("Send & Shutdown") {
+                appState.confirmShutdown()
+            }
+            Button("Force Stop (no message)") {
+                appState.forceStop()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Enter a message to broadcast to all connected users before shutting down.")
+        }
         .onAppear {
             if appState.isFirstLaunch {
                 appState.showSetupWizard = true
@@ -140,6 +152,11 @@ struct RightPanelView: View {
                     Text("port \(appState.serverPort)")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
+                    if appState.tlsEnabled {
+                        Text("TLS \(appState.tlsPort)")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
             .padding(.horizontal, 12)
