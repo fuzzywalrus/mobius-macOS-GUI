@@ -73,6 +73,30 @@ final class ProcessManager {
         Bundle.main.url(forResource: "mobius-hotline-server", withExtension: nil)
     }
 
+    /// Returns the version string from the embedded server binary (e.g. "v0.21.0").
+    static var serverVersion: String? {
+        guard let binaryURL = embeddedBinaryURL else { return nil }
+        let proc = Process()
+        proc.executableURL = binaryURL
+        proc.arguments = ["--version"]
+        let pipe = Pipe()
+        proc.standardOutput = pipe
+        proc.standardError = FileHandle.nullDevice
+        do {
+            try proc.run()
+            proc.waitUntilExit()
+            guard let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) else { return nil }
+            // Output format: "mobius-hotline-server version v0.21.0, commit abc1234"
+            let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let range = trimmed.range(of: "version ") {
+                return String(trimmed[range.upperBound...])
+            }
+            return trimmed
+        } catch {
+            return nil
+        }
+    }
+
     /// Start the server binary with the given configuration.
     func start(config: ServerLaunchConfig) throws {
         guard process == nil else { return }

@@ -17,6 +17,12 @@ struct AboutView: View {
                 .font(.body)
                 .foregroundStyle(.secondary)
 
+            if let serverVersion = ProcessManager.serverVersion {
+                Text("Mobius Server \(serverVersion)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Text("A native macOS GUI for the Mobius Hotline server.")
                 .font(.body)
                 .foregroundStyle(.secondary)

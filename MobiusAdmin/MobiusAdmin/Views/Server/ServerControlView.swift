@@ -52,6 +52,13 @@ struct ServerControlView: View {
                     .font(.caption)
                 }
 
+                if let serverVersion = ProcessManager.serverVersion {
+                    Text("Mobius Server \(serverVersion)")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .padding(.top, 4)
+                }
+
                 Button("Run Setup Wizard...") {
                     appState.showSetupWizard = true
                 }
